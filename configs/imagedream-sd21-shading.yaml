@@ -1,11 +1,12 @@
 name: "imagedream-sd21-shading"
-tag: "${rmspace:${system.prompt_processor.prompt},_}"
+tag: "testtest"
+# tag: "${rmspace:${system.prompt_processor.prompt},_}"
 exp_root_dir: "outputs"
 seed: 0
 
 data_type: "random-multiview-camera-datamodule"
 data:
-  batch_size: [8, 4, 4]
+  batch_size: [4, 4, 4]
   width: [64, 192, 256]
   height: [64, 192, 256]
   resolution_milestones: [5000, 10000]
@@ -62,10 +63,11 @@ system:
   prompt_processor_type: "stable-diffusion-prompt-processor"
   prompt_processor:
     pretrained_model_name_or_path: "stabilityai/stable-diffusion-2-1-base"
-    prompt: ???
+    prompt: "the character of unitychan"
     negative_prompt: "ugly, bad anatomy, blurry, pixelated obscure, unnatural colors, poor lighting, dull, and unclear, cropped, lowres, low quality, artifacts, duplicate, morbid, mutilated, poorly drawn face, deformed, dehydrated, bad proportions"
     front_threshold: 30.
     back_threshold: 30.
+    image_path: "data/images/unitychan_rgba.png"
 
   guidance_type: "multiview-diffusion-guidance"
   guidance:
@@ -77,6 +79,7 @@ system:
     recon_loss: true
     recon_std_rescale: 0.2
     ip_mode: "pixel"
+    config_path: "ImageDream/extern/ImageDream/imagedream/configs/sd_v2_base_ipmv.yaml"
 
   loggers:
     wandb:

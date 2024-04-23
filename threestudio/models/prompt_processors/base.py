@@ -178,7 +178,7 @@ class PromptProcessor(BaseObject):
         prompt: str = "a hamburger"
         image_path: Optional[str] = None
         image: Optional[Any] = None
-        
+
         # manually assigned view-dependent prompts
         prompt_side: Optional[str] = None
         prompt_back: Optional[str] = None
@@ -296,7 +296,7 @@ class PromptProcessor(BaseObject):
 
         self.direction2idx = {d.name: i for i, d in enumerate(self.directions)}
 
-        with open(os.path.join("load/prompt_library.json"), "r") as f:
+        with open(os.path.join("ImageDream/load/prompt_library.json"), "r") as f:
             self.prompt_library = json.load(f)
         # use provided prompt or find prompt in library
         self.prompt = self.preprocess_prompt(self.cfg.prompt)
@@ -501,7 +501,7 @@ class PromptProcessor(BaseObject):
         cleanup()
 
         return debiased_prompts
-    
+
     def get_image(self, image_path: str = None):
         if image_path is None:
             return None

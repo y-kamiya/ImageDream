@@ -40,6 +40,9 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
         super().__init__(*args, **kwargs)
         self.zoom_range = self.cfg.zoom_range
 
+    def __len__(self):
+        return 100
+
     def collate(self, batch) -> Dict[str, Any]:
         assert (
             self.batch_size % self.cfg.n_view == 0
