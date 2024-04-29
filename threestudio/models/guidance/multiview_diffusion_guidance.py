@@ -328,7 +328,7 @@ class MultiviewDiffusionGuidance(BaseModule):
         else:
             # Original SDS
             # w(t), sigma_t^2
-            w = 1 - self.alphas_cumprod[t]
+            w = 1 - self.model.alphas_cumprod[t]
             grad = w * (noise_pred - noise)
 
             # clip grad for stable training?
