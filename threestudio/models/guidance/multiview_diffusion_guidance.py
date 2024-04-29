@@ -19,7 +19,6 @@ from threestudio.models.prompt_processors.base import PromptProcessorOutput
 from threestudio.utils.base import BaseModule
 from threestudio.utils.misc import C, cleanup, parse_version
 from threestudio.utils.typing import *
-import cv2
 
 
 @threestudio.register("multiview-diffusion-guidance")
@@ -309,13 +308,6 @@ class MultiviewDiffusionGuidance(BaseModule):
                     self.cfg.recon_std_rescale * latents_recon_adjust
                     + (1 - self.cfg.recon_std_rescale) * latents_recon
                 )
-                x0 = self.model.decode_first_stage(latents)
-                x0_recon = self.model.decode_first_stage(latents_recon)
-                a = torch.cat([x0, x0_recon], dim=3)
-                a = torch.cat([a[0], a[1], a[2], a[3]], dim=1).permute(1, 2, 0)
-                pred_rgbs = (a.detach().cpu().numpy() * 255).astype(np.uint8)
-                pred = cv2.cvtColor(pred_rgbs, cv2.COLOR_RGB2BGR)
-                cv2.imwrite("output/a.png", pred)
 
             # x0-reconstruction loss from Sec 3.2 and Appendix
             loss = (
