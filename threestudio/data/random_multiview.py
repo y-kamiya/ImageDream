@@ -123,12 +123,9 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
         # elevation in (-90, 90), azimuth from +x to +y in (-180, 180)
         camera_positions: Float[Tensor, "B 3"] = torch.stack(
             [
-                # camera_distances * torch.cos(elevation) * torch.cos(azimuth),
-                # camera_distances * torch.cos(elevation) * torch.sin(azimuth),
-                # camera_distances * torch.sin(elevation),
-                camera_distances * torch.sin(elevation) * torch.sin(azimuth),
-                camera_distances * torch.cos(elevation),
-                camera_distances * torch.sin(elevation) * torch.cos(azimuth),
+                camera_distances * torch.cos(elevation) * torch.cos(azimuth),
+                camera_distances * torch.cos(elevation) * torch.sin(azimuth),
+                camera_distances * torch.sin(elevation),
             ],
             dim=-1,
         )
@@ -136,7 +133,7 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
         # default scene center at origin
         center: Float[Tensor, "B 3"] = torch.zeros_like(camera_positions)
         # default camera up direction as +z
-        up: Float[Tensor, "B 3"] = torch.as_tensor([0, 1, 0], dtype=torch.float32)[
+        up: Float[Tensor, "B 3"] = torch.as_tensor([0, 0, 1], dtype=torch.float32)[
             None, :
         ].repeat(self.batch_size, 1)
 
@@ -219,8 +216,8 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
             )
 
         lookat: Float[Tensor, "B 3"] = F.normalize(center - camera_positions, dim=-1)
-        right: Float[Tensor, "B 3"] = F.normalize(torch.cross(-lookat, up), dim=-1)
-        up = F.normalize(torch.cross(right, -lookat), dim=-1)
+        right: Float[Tensor, "B 3"] = F.normalize(torch.cross(lookat, up), dim=-1)
+        up = F.normalize(torch.cross(right, lookat), dim=-1)
         c2w3x4: Float[Tensor, "B 3 4"] = torch.cat(
             [torch.stack([right, up, -lookat], dim=-1), camera_positions[:, :, None]],
             dim=-1,
