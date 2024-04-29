@@ -28,19 +28,25 @@ def create_camera_to_world_matrix(elevation, azimuth):
     return cam2world
 
 
+def convert_blender_to_opengl(camera_matrix):
+    matrix = [[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]]
+    return convert_coordinates(camera_matrix, matrix)
+
 def convert_opengl_to_blender(camera_matrix):
+    matrix = [[1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]
+    return convert_coordinates(camera_matrix, matrix)
+
+def convert_coordinates(camera_matrix, convert_matrix):
     if isinstance(camera_matrix, np.ndarray):
         # Construct transformation matrix to convert from OpenGL space to Blender space
-        flip_yz = np.array([[1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
-        camera_matrix_blender = np.dot(flip_yz, camera_matrix)
+        flip_coordinates = np.array(convert_matrix)
+        camera_matrix_blender = np.dot(flip_coordinates, camera_matrix)
     else:
         # Construct transformation matrix to convert from OpenGL space to Blender space
-        flip_yz = torch.tensor(
-            [[1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]
-        )
+        flip_coordinates = torch.tensor(convert_matrix)
         if camera_matrix.ndim == 3:
-            flip_yz = flip_yz.unsqueeze(0)
-        camera_matrix_blender = torch.matmul(flip_yz.to(camera_matrix), camera_matrix)
+            flip_coordinates = flip_coordinates.unsqueeze(0)
+        camera_matrix_blender = torch.matmul(flip_coordinates.to(camera_matrix), camera_matrix)
     return camera_matrix_blender
 
 
