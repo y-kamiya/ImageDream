@@ -211,20 +211,21 @@ if __name__ == "__main__":
     parser.add_argument("--fp16", action="store_true")
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument(
-        "--mode", type=str, default="pixel", 
+        "--mode", type=str, default="pixel",
         help="ip mode default pixel"
     )
     args = parser.parse_args()
-    
+
     t = args.text + args.suffix
     assert args.num_frames in [4, 5], "num_frames should be in [4, 5]"
     assert os.path.exists(args.image), "image does not exist!"
     ip = Image.open(args.image)
-    ip = add_random_background(ip)
+    if ip.mode == "RGBA":
+        ip = add_random_background(ip)
 
     image_dream = ImageDreamDiffusion(args)
     images = image_dream.diffuse(t, ip, n_test=3)
-    
+
     name = os.path.basename(args.image).split(".")[0]
     images = np.concatenate(images, 0)
     Image.fromarray(images).save(f"{name}_{args.mode}_dream.png")
