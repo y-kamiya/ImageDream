@@ -39,6 +39,9 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.zoom_range = self.cfg.zoom_range
+        self.full_body = True
+        self.face_center = torch.zeros((1, 3))
+        self.face_scale = 1.
 
     def __len__(self):
         return 100
@@ -100,10 +103,11 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
         fovy = fovy_deg * math.pi / 180
 
         # sample distances from a uniform distribution bounded by distance_range
+        face_scale = 1. if self.full_body else self.face_scale
         camera_distances: Float[Tensor, "B"] = (
             torch.rand(real_batch_size)
-            * (self.camera_distance_range[1] - self.camera_distance_range[0])
-            + self.camera_distance_range[0]
+            * (self.camera_distance_range[1] - self.camera_distance_range[0]) * face_scale
+            + self.camera_distance_range[0] * face_scale
         ).repeat_interleave(self.cfg.n_view, dim=0)
         if self.cfg.relative_radius:
             scale = 1 / torch.tan(0.5 * fovy)
@@ -118,6 +122,7 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
         fovy_deg = fovy_deg * zoom
         ###########################################
 
+        shift = 0. if self.full_body else self.face_center
         # convert spherical coordinates to cartesian coordinates
         # right hand coordinate system, x back, y right, z up
         # elevation in (-90, 90), azimuth from +x to +y in (-180, 180)
@@ -128,10 +133,10 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
                 camera_distances * torch.sin(elevation),
             ],
             dim=-1,
-        )
+        ) + shift
 
         # default scene center at origin
-        center: Float[Tensor, "B 3"] = torch.zeros_like(camera_positions)
+        center: Float[Tensor, "B 3"] = torch.zeros_like(camera_positions) + shift
         # default camera up direction as +z
         up: Float[Tensor, "B 3"] = torch.as_tensor([0, 0, 1], dtype=torch.float32)[
             None, :

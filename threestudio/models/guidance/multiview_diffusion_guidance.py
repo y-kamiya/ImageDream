@@ -152,11 +152,15 @@ class MultiviewDiffusionGuidance(BaseModule):
             ip_pos_num = real_batch_size // 2
             ip_img = ip_img.repeat(ip_pos_num, 1, 1, 1)
             context["ip_img"] = torch.cat([
-                ip_img, 
+                ip_img,
                 torch.zeros_like(ip_img)], dim=0) # 2 * (batchsize + 1, c, h, w)
-        
+
         return latent_input, t_expand, context
-    
+
+    @classmethod
+    def prompt_image(cls, prompt_utils, is_full_body):
+        return prompt_utils.image if is_full_body else prompt_utils.face_image
+
     def forward(
         self,
         rgb: Float[Tensor, "B H W C"],
@@ -170,6 +174,7 @@ class MultiviewDiffusionGuidance(BaseModule):
         timestep=None,
         text_embeddings=None,
         input_is_latent=False,
+        is_full_body=True,
         **kwargs,
     ):
         batch_size = rgb.shape[0]
@@ -183,8 +188,9 @@ class MultiviewDiffusionGuidance(BaseModule):
             )
             
         ip = None
-        if prompt_utils.image is not None:
-            ip = prompt_utils.image
+        prompt_img = self.prompt_image(prompt_utils, is_full_body)
+        if prompt_img is not None:
+            ip = prompt_img
             bg_color = kwargs.get("comp_rgb_bg")
             bg_color = bg_color.mean().detach().cpu().numpy() * 255 
             ip = add_random_background(ip, bg_color)
@@ -248,8 +254,8 @@ class MultiviewDiffusionGuidance(BaseModule):
                 }
             else:
                 context = {"context": text_embeddings}
-                
-            if prompt_utils.image is not None:
+
+            if prompt_img is not None:
                 context["ip"] = torch.cat([
                     image_embeddings.repeat(batch_size, 1, 1), 
                     un_image_embeddings.repeat(batch_size, 1, 1)], dim=0).to(text_embeddings)

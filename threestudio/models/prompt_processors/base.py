@@ -49,6 +49,7 @@ class PromptProcessorOutput:
     perp_neg_f_fs: Tuple[float, float, float]
     perp_neg_f_sf: Tuple[float, float, float]
     image: Any
+    face_image: Any
 
     def get_text_embeddings(
         self,
@@ -177,6 +178,7 @@ class PromptProcessor(BaseObject):
     class Config(BaseObject.Config):
         prompt: str = "a hamburger"
         image_path: Optional[str] = None
+        face_image_path: Optional[str] = None
         image: Optional[Any] = None
 
         # manually assigned view-dependent prompts
@@ -520,5 +522,6 @@ class PromptProcessor(BaseObject):
             perp_neg_f_fsb=self.cfg.perp_neg_f_fsb,
             perp_neg_f_fs=self.cfg.perp_neg_f_fs,
             perp_neg_f_sf=self.cfg.perp_neg_f_sf,
-            image=self.get_image(self.cfg.image_path)
+            image=self.get_image(self.cfg.image_path),
+            face_image=self.get_image(self.cfg.face_image_path)
         )

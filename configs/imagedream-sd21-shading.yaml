@@ -68,6 +68,7 @@ system:
     front_threshold: 30.
     back_threshold: 30.
     image_path: "data/images/unitychan_rgba.png"
+    face_image_path: "data/images/unitychan_face_rgba.png"
 
   guidance_type: "multiview-diffusion-guidance"
   guidance:
