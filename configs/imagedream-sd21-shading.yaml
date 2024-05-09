@@ -7,8 +7,8 @@ seed: 0
 data_type: "random-multiview-camera-datamodule"
 data:
   batch_size: [4, 4, 4]
-  width: [64, 192, 256]
-  height: [64, 192, 256]
+  width: [256, 256, 256]
+  height: [256, 256, 256]
   resolution_milestones: [5000, 10000]
   camera_distance_range: [0.6, 0.75]
   fovy_range: [45, 50]
@@ -75,8 +75,10 @@ system:
     model_name: "sd-v2.1-base-4view-ipmv"
     ckpt_path: null # path to a pre-downloaded checkpoint file (null for loading from URL)
     guidance_scale: 5.0
-    min_step_percent: [0, 0.98, 0.02, 8000]  # (start_iter, start_val, end_val, end_iter)
-    max_step_percent: [0, 0.98, 0.50, 8000]
+    # min_step_percent: [0, 0.98, 0.02, 8000]  # (start_iter, start_val, end_val, end_iter)
+    # max_step_percent: [0, 0.98, 0.50, 8000]
+    min_step_percent: 0.02
+    max_step_percent: 0.98
     recon_loss: true
     recon_std_rescale: 0.2
     ip_mode: "pixel"
