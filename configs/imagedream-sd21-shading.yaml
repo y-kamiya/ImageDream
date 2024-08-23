@@ -6,9 +6,9 @@ seed: 0
 
 data_type: "random-multiview-camera-datamodule"
 data:
-  batch_size: [4, 4, 4]
-  width: [256, 256, 256]
-  height: [256, 256, 256]
+  batch_size: 4
+  width: 512
+  height: 512
   resolution_milestones: [5000, 10000]
   camera_distance_range: [0.6, 0.75]
   fovy_range: [45, 50]
