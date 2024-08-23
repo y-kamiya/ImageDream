@@ -92,6 +92,7 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
         ) + self.azimuth_range[
             0
         ]
+        azimuth_deg = torch.tensor([0, 90, 180, 270], dtype=torch.float32)
         azimuth = azimuth_deg * math.pi / 180
 
         ######## Different from original ########
