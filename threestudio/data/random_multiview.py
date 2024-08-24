@@ -122,6 +122,7 @@ class RandomMultiviewCameraIterableDataset(RandomCameraIterableDataset):
         fovy_deg = fovy_deg * zoom
         ###########################################
 
+        # shift = Tensor([0., 0., 0.050]) if self.full_body else self.face_center
         shift = 0. if self.full_body else self.face_center
         # convert spherical coordinates to cartesian coordinates
         # right hand coordinate system, x back, y right, z up

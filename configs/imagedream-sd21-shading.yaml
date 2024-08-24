@@ -10,9 +10,11 @@ data:
   width: 512
   height: 512
   resolution_milestones: [5000, 10000]
-  camera_distance_range: [0.6, 0.75]
-  fovy_range: [45, 50]
-  elevation_range: [0, 30]
+  # camera_distance_range: [0.6, 0.75]
+  camera_distance_range: [0.55, 0.55]
+  # fovy_range: [45, 50]
+  fovy_range: [60, 60]
+  elevation_range: [0, 5]
   n_view: 4
   n_val_views: 4
   camera_perturb: 0.
@@ -67,7 +69,9 @@ system:
     negative_prompt: "ugly, bad anatomy, blurry, pixelated obscure, unnatural colors, poor lighting, dull, and unclear, cropped, lowres, low quality, artifacts, duplicate, morbid, mutilated, poorly drawn face, deformed, dehydrated, bad proportions"
     front_threshold: 30.
     back_threshold: 30.
-    image_path: "data/images/unitychan_rgba.png"
+    image_path: "data/images/unitychan_z150_rgba.png"
+    # image_path: "data/images/unitychan_rgba.png"
+    # face_image_path: "data/images/unitychan_face_z135_rgba.png"
     face_image_path: "data/images/unitychan_face_rgba.png"
 
   guidance_type: "multiview-diffusion-guidance"

@@ -19,6 +19,7 @@ from threestudio.models.prompt_processors.base import PromptProcessorOutput
 from threestudio.utils.base import BaseModule
 from threestudio.utils.misc import C, cleanup, parse_version
 from threestudio.utils.typing import *
+import cv2
 
 
 @threestudio.register("multiview-diffusion-guidance")
@@ -58,10 +59,10 @@ class MultiviewDiffusionGuidance(BaseModule):
         threestudio.info(f"Loading Multiview Diffusion ...")
 
         self.model = build_model(
-            self.cfg.model_name, 
+            self.cfg.model_name,
             config_path=self.cfg.config_path,
             ckpt_path=self.cfg.ckpt_path)
-            
+
         for p in self.model.parameters():
             p.requires_grad_(False)
 
@@ -104,7 +105,7 @@ class MultiviewDiffusionGuidance(BaseModule):
 
     def append_extra_view(self, latent_input, t_expand, context, ip=None):
         """
-        Args: 
+        Args:
             latent_input: [BZ, C, H, W]
             context: dict that contain text, camera, image embeddings
             ip: the input image
@@ -124,18 +125,18 @@ class MultiviewDiffusionGuidance(BaseModule):
         zero_tensor = torch.zeros(real_batch_size, 1, c, h, w).to(latent_input)
         latent_input = torch.cat([latent_input, zero_tensor], dim=1)
         latent_input = latent_input.reshape(-1, c, h, w)
-        
+
         # make time expand here
         t_expand = torch.cat([t_expand, t_expand[-1:].repeat(real_batch_size)])
-        
-        # repeat 
+
+        # repeat
         for key in ["context", "ip"]:
             embedding = context[key] # repeat for last dim features
             features = []
             for feature in embedding.chunk(real_batch_size):
                 features.append(torch.cat([feature, feature[-1].unsqueeze(0)], dim=0))
             context[key] = torch.cat(features, dim=0)
-        
+
         # set 0
         for key in ["camera"]:
             embedding = context[key]
@@ -144,7 +145,7 @@ class MultiviewDiffusionGuidance(BaseModule):
                 zero_tensor = torch.zeros_like(feature[0]).unsqueeze(0).to(feature)
                 features.append(torch.cat([feature, zero_tensor], dim=0))
             context[key] = torch.cat(features, dim=0)
-        
+
         if ip:
             ip = image_transform(ip).to(latent_input)
             ip_img = self.model.get_first_stage_encoding(
@@ -178,7 +179,7 @@ class MultiviewDiffusionGuidance(BaseModule):
         **kwargs,
     ):
         batch_size = rgb.shape[0]
-        extra_view = self.cfg.ip_mode == "pixel"    
+        extra_view = self.cfg.ip_mode == "pixel"
         camera = c2w
 
         rgb_BCHW = rgb.permute(0, 3, 1, 2)
@@ -186,18 +187,18 @@ class MultiviewDiffusionGuidance(BaseModule):
             text_embeddings = prompt_utils.get_text_embeddings(
                 elevation, azimuth, camera_distances, self.cfg.view_dependent_prompting
             )
-            
+
         ip = None
         prompt_img = self.prompt_image(prompt_utils, is_full_body)
         if prompt_img is not None:
             ip = prompt_img
             bg_color = kwargs.get("comp_rgb_bg")
-            bg_color = bg_color.mean().detach().cpu().numpy() * 255 
+            bg_color = bg_color.mean().detach().cpu().numpy() * 255
             ip = add_random_background(ip, bg_color)
             image_embeddings = self.model.get_learned_image_conditioning(ip)
             un_image_embeddings = \
                 torch.zeros_like(image_embeddings).to(image_embeddings)
-                    
+
         if input_is_latent:
             latents = rgb
         else:
@@ -257,31 +258,31 @@ class MultiviewDiffusionGuidance(BaseModule):
 
             if prompt_img is not None:
                 context["ip"] = torch.cat([
-                    image_embeddings.repeat(batch_size, 1, 1), 
+                    image_embeddings.repeat(batch_size, 1, 1),
                     un_image_embeddings.repeat(batch_size, 1, 1)], dim=0).to(text_embeddings)
-            
+
             if extra_view:
                 latent_model_input, t_expand, context = \
-                    self.append_extra_view(latent_model_input, t_expand, context, ip=ip)     
-                    
+                    self.append_extra_view(latent_model_input, t_expand, context, ip=ip)
+
             noise_pred = self.model.apply_model(latent_model_input, t_expand, context)
 
         # perform guidance
         noise_pred_text, noise_pred_uncond = noise_pred.chunk(
             2
         )  # Note: flipped compared to stable-dreamfusion
-        
+
         if extra_view:
             _, c, h, w = noise_pred_text.shape
             def remove_extra_view(embedding):
                 embedding = embedding.reshape(-1, (self.cfg.n_view + 1), c, h, w)
                 embedding = embedding[:, :-1, :, :, :].reshape(-1, c, h, w)
                 return embedding
-            
+
             noise_pred_text, noise_pred_uncond = \
                 remove_extra_view(noise_pred_text), \
                 remove_extra_view(noise_pred_uncond)
-                
+
         noise_pred = noise_pred_uncond + self.cfg.guidance_scale * (
             noise_pred_text - noise_pred_uncond
         )
@@ -314,6 +315,27 @@ class MultiviewDiffusionGuidance(BaseModule):
                     self.cfg.recon_std_rescale * latents_recon_adjust
                     + (1 - self.cfg.recon_std_rescale) * latents_recon
                 )
+                # x0 = self.model.decode_first_stage(latents)
+                # x0_recon = self.model.decode_first_stage(latents_recon)
+                # print(torch.min(x0), torch.min(x0_recon))
+                # print(torch.max(x0), torch.max(x0_recon))
+                # x0 = (x0 + 1.0) * 0.5
+                # x0_recon = (x0_recon + 1.0) * 0.5
+                # print(torch.min(x0), torch.min(x0_recon))
+                # print(torch.max(x0), torch.max(x0_recon))
+                # a = torch.cat([x0, x0_recon], dim=3)
+                # print(a.shape)
+                # a = torch.cat([a[0], a[1], a[2], a[3]], dim=1).permute(1, 2, 0)
+                # pred_rgbs = (a.detach().cpu().numpy() * 255).astype(np.uint8)
+                # from PIL import Image
+                # Image.fromarray(pred_rgbs).save("output/pred_rgbs.png")
+                # print(rgb.shape)
+                # Image.fromarray((rgb[0].detach().cpu().numpy()*255).astype(np.uint8)).save("output/rgb.png")
+                # # pred = cv2.cvtColor(pred_rgbs, cv2.COLOR_RGB2BGR)
+                # print(is_full_body)
+                # prompt_img.save("output/prior.png")
+                # import sys
+                # sys.exit()
 
             # x0-reconstruction loss from Sec 3.2 and Appendix
             loss = (
